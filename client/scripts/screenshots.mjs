@@ -45,13 +45,23 @@ function checkPage() {
     const text = (el.getAttribute("aria-label") || el.textContent || "").trim().replace(/\s+/g, " ").slice(0, 40);
     return `${el.tagName.toLowerCase()}${el.className && typeof el.className === "string" ? "." + el.className.trim().split(/\s+/).join(".") : ""} "${text}"`;
   };
+  // Scrolled out of a scrolling panel (e.g. host tools below the standings): not drawn.
+  const scrolledAway = (el, r) => {
+    for (let p = el.parentElement; p; p = p.parentElement) {
+      const o = getComputedStyle(p).overflowY;
+      if (o !== "auto" && o !== "scroll") continue;
+      const b = p.getBoundingClientRect();
+      if (r.top >= b.bottom - 1 || r.bottom <= b.top + 1) return true;
+    }
+    return false;
+  };
   const visible = (el) => {
     const r = el.getBoundingClientRect();
     const cs = getComputedStyle(el);
     return (
       r.width > 0 && r.height > 0 && cs.visibility !== "hidden" && cs.display !== "none" &&
       r.bottom > 0 && r.top < vh && r.right > 0 && r.left < vw && !el.closest("[inert]") &&
-      !(el.closest("details:not([open])") && !el.closest("summary"))
+      !(el.closest("details:not([open])") && !el.closest("summary")) && !scrolledAway(el, r)
     );
   };
 
